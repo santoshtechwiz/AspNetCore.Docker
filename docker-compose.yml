@@ -1,0 +1,36 @@
+version: '3.4'
+
+services:
+  server:
+    build:
+      context: ./AspNetCore.Docker
+    ports:
+      - "5000:5000"  # Exposing container's port 5000 as host port 5000
+    depends_on:
+      - redis
+      - postgresdb  # Server depends on both Redis and PostgreSQL
+    networks:
+      - aspnetcoreapp-network
+    environment:
+      - ASPNETCORE_HTTP_PORTS=5000  # Server listens on port 5000 inside the container
+      - ConnectionStrings__PostgresConnection=Host=postgresdb;Port=5432;Database=demo;Username=postgres;Password=password
+      - ConnectionStrings__RedisConnection=redis:6379  # Use the service name 'redis' to connect internally
+     
+  redis:
+    image: "redis:latest"  # Use the latest Redis image
+    ports:
+      - "6379:6379"  # Expose Redis on the default port 6379
+   
+  postgresdb:
+    image: "postgres:latest"  # Use the latest PostgreSQL image
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: demo
+    ports:
+      - "5432:5432"  # Exposing PostgreSQL's default port 5432
+    networks:
+      - aspnetcoreapp-network
+
+networks:
+  aspnetcoreapp-network:
+    driver: bridge
